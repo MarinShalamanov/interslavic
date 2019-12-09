@@ -10,7 +10,7 @@ export interface IPronounParadigm {
     casesPlural?: {};
 }
 
-export function declensionPronoun(rawWord: string, pronounType: string): IPronounParadigm {
+export function declensionPronoun(rawWord: string, pronounType: string, flat = false): IPronounParadigm {
     // now we don't know how to decline the phrases
     if (rawWord.includes(' ')) {
         return null;

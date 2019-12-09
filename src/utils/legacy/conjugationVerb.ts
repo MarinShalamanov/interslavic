@@ -10,9 +10,12 @@ const prefixes = [
     'sò', 's', 'u', 'vò', 'vo', 'v', 'vòz', 'voz', 'vy', 'za',
 ];
 
-export function conjugationVerb(inf, rawPts) {
+export function conjugationVerb(inf, rawPts, flat = false): any {
     //special cases
     if (inf === 'dòlžen byti' || inf.split(' ')[0].includes('/')) {
+        if (flat) {
+            return [];
+        }
         return null;
     }
     if (inf === 'sųt') {
@@ -39,6 +42,21 @@ export function conjugationVerb(inf, rawPts) {
     const pfap = build_pfap(lpa, refl);
     const pfpp = build_pfpp(pref, is, psi);
     const gerund = build_gerund(pfpp, refl);
+
+    if (flat) {
+        return [
+            ...conditional.filter(Boolean).map((item) => item.split(' ')[1].replace(/\(|\)/g, '')),
+            gerund,
+            ...imperative.replace(/ /g, '').split(','),
+            ...imperfect,
+            infinitive,
+            pfap,
+            ...pfpp.replace(/\(|\)|,/g, '').split(' '),
+            ...prap.replace(/\(|\)|,/g, '').split(' '),
+            ...prpp.replace(/\(|\)|,/g, '').split(' '),
+            ...present.join(',').replace(/ /g, '').split(',')
+        ].filter(Boolean);
+    }
 
     return {
         infinitive,

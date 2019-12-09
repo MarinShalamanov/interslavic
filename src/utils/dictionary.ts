@@ -10,12 +10,60 @@ import { removeBrackets } from 'utils/removeBrackets';
 import { convertCases } from 'utils/convertCases';
 import { removeExclamationMark } from 'utils/removeExclamationMark';
 
+import { declensionNoun } from 'utils/legacy/declensionNoun';
+import { declensionAdjective } from 'utils/legacy/declensionAdjective';
+import { conjugationVerb } from 'utils/legacy/conjugationVerb';
+import { declensionNumeral } from 'utils/legacy/declensionNumeral';
+import {
+    getGender,
+    getNumeralType,
+    getPartOfSpeech,
+    getPronounType,
+    getVerbType,
+    isAnimated,
+    isIndeclinable,
+    isPlural,
+    isSingular,
+} from 'utils/wordDetails';
+import { declensionPronoun } from 'utils/legacy/declensionPronoun';
+
 export const searchTypes = {
     begin: (item, text) => item.indexOf(text) === 0,
     full: (item, text) => item === text,
     end: (item, text) =>  item.includes(text) && item.indexOf(text) === item.length - text.length,
     some: (item, text) => item.includes(text),
 };
+
+function getWordForms(item) {
+    const [word, add, details] = item;
+    const pos = getPartOfSpeech(details);
+    switch (pos) {
+        case 'verb':
+            return conjugationVerb(word, add, true);
+        case 'adjective':
+            return declensionAdjective(word, '', true);
+        case 'noun':
+            const gender = getGender(details.replace('m./f.', 'm.' ));
+            const animated = isAnimated(details);
+            const plural = isPlural(details);
+            const singular = isSingular(details);
+            const indeclinable = isIndeclinable(details);
+            const nounData = declensionNoun(word, add, gender, animated, plural, singular, indeclinable, true);
+
+            if (nounData) {
+                return nounData.filter(Boolean);
+            } else {
+                return [];
+            }
+        // case 'pronoun':
+        //     declensionPronoun(word, getPronounType(details), true);
+        //     break;
+        // case 'numeral':
+        //     declensionNumeral(word, getNumeralType(details));
+        //     break;
+    }
+    return [];
+}
 
 export interface ITranslateResult {
     translate: string;
@@ -62,6 +110,7 @@ class DictionaryClass {
     }
 
     public init(wordList: string[][]) {
+        console.time('INIT');
         this.header = wordList.shift().map((l) => l.replace(/\W/g, ''));
         this.langsList = this.header.filter(
             (item) => (['partOfSpeech', 'type', 'sameInLanguages', 'genesis', 'addition', 'id'].indexOf(item) === -1),
@@ -92,6 +141,7 @@ class DictionaryClass {
                 if (from === 'isv') {
                     splittedField = this
                         .splitWords(fromField)
+                        .concat(getWordForms(item))
                         .concat(this.isvAddMap.get(this.getField(item, 'addition')))
                     ;
                 } else {
@@ -106,6 +156,7 @@ class DictionaryClass {
             const count = (1 - notChecked.length / this.words.length) * 100;
             this.percentsOfChecked[fieldName] = count.toFixed(1);
         });
+        console.timeEnd('INIT');
     }
     public getWordList(): string[][] {
         return this.words;

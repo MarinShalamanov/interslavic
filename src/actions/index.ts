@@ -110,7 +110,7 @@ export function fetchDictionary(wordsListUrl) {
                 Dictionary.init(wordList);
                 dispatch(runSearch());
             })
-            .catch(() => location.reload(true))
+            // .catch(() => location.reload(true))
         ;
     };
 }
